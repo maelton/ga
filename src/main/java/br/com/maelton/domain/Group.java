@@ -2,33 +2,33 @@ package br.com.maelton.domain;
 
 import java.util.Objects;
 
-public class Classroom {
+public class Group {
     private int id;
-    private int capacity;
+    private int size;
     
     public int getId() {
         return id;
     }
 
-    public int getCapacity() {
-        return capacity;
+    public int getSize() {
+        return size;
     }
 
-    public void setCapacity(int capacity) {
-        this.capacity = capacity;
+    public void setSize(int size) {
+        this.size = size;
     }
 
-    public Classroom(int id, int capacity) {
+    public Group(int id, int size) {
         this.id = id;
-        this.capacity = capacity;
+        this.size = size;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if ((o == null) || getClass() != o.getClass()) return false;
-        Classroom classroom = (Classroom) o;
-        return this.id == classroom.id;
+        Group group = (Group) o;
+        return id == group.id;
     }
 
     @Override
@@ -38,6 +38,6 @@ public class Classroom {
 
     @Override
     public String toString() {
-        return String.format("Classroom[id=%d, capacity=%d]", this.id, this.capacity);
+        return String.format("Group[id=%d, size=%d]", this.id, this.size);
     }
 }
