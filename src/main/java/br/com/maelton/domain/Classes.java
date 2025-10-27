@@ -2,7 +2,7 @@ package br.com.maelton.domain;
 
 import java.util.Objects;
 
-public class Group {
+public class Classes {
     private int id;
     private int size;
     
@@ -18,7 +18,7 @@ public class Group {
         this.size = size;
     }
 
-    public Group(int id, int size) {
+    public Classes(int id, int size) {
         this.id = id;
         this.size = size;
     }
@@ -27,7 +27,7 @@ public class Group {
     public boolean equals(Object o) {
         if (this == o) return true;
         if ((o == null) || getClass() != o.getClass()) return false;
-        Group group = (Group) o;
+        Classes group = (Classes) o;
         return id == group.id;
     }
 

@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import br.com.maelton.domain.Classroom;
-import br.com.maelton.domain.Group;
+import br.com.maelton.domain.Classes;
 
 public class Main {
     public static void main(String[] args) {
@@ -14,12 +14,12 @@ public class Main {
             new Classroom(3, 35),
             new Classroom(4, 40)
         );
-        List<Group> groups = Arrays.asList(
-            new Group(1, 25),
-            new Group(2, 30),
-            new Group(3, 35),
-            new Group(4, 45),
-            new Group(5, 50)
+        List<Classes> groups = Arrays.asList(
+            new Classes(1, 25),
+            new Classes(2, 30),
+            new Classes(3, 35),
+            new Classes(4, 45),
+            new Classes(5, 50)
         );
     }
 }
