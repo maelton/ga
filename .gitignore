@@ -1,5 +1,8 @@
 # vscode
 .vscode/
 
+# intellij
+.idea/
+
 # java
 target/
