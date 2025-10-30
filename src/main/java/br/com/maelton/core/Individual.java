@@ -1,5 +1,8 @@
 package br.com.maelton.core;
 
+import java.util.Arrays;
+import java.util.function.Function;
+
 public class Individual {
     /**
      * Each position (index) in this array represents a class.
@@ -32,6 +35,8 @@ public class Individual {
     public Individual(int[] chromosome) {
         this.chromosome = chromosome;
     }
-
-    public Individual() {}
+    @Override
+    public String toString() {
+        return "Individual [chromosome=" + Arrays.toString(chromosome) + ", fitness=" + getFitness() + "]";
+    }
 }

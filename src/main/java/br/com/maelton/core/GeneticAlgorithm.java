@@ -14,22 +14,33 @@ import br.com.maelton.domain.Classroom;
 
 public class GeneticAlgorithm {
     private int populationSize;
-    private int generations;
+    private int numberOfGenerations;
     private double mutationRate;
-    private static final int ALLOCATION_MAX_ATTEMPTS = 100;
+    private List<Classes> classes;
+    private List<Classroom> classrooms;
+
+    private static final int ALLOCATION_MAX_ATTEMPTS = 10_000;
     private static final int TOURNAMENT_SIZE = 2;
 
-    public GeneticAlgorithm(int populationSize, int generations, double mutationRate) {
+    public GeneticAlgorithm(
+        int populationSize, 
+        int numberOfGenerations, 
+        double mutationRate,
+        List<Classes> classes, 
+        List<Classroom> classrooms
+    ) {
         this.populationSize = populationSize;
-        this.generations = generations;
+        this.numberOfGenerations = numberOfGenerations;
         this.mutationRate = mutationRate;
+        this.classes = classes;
+        this.classrooms = classrooms;
     }
 
-    public Individual generateRandomValidAllocation(List<Classes> classes, List<Classroom> classrooms) {
-        return generateRandomValidAllocation(classes, classrooms, ALLOCATION_MAX_ATTEMPTS);
+    private Individual generateRandomValidAllocation(List<Classes> classes, List<Classroom> classrooms) {
+        return generateIndividual(classes, classrooms, ALLOCATION_MAX_ATTEMPTS);
     }
 
-    private Individual generateRandomValidAllocation(List<Classes> classes, List<Classroom> classrooms, int maxAttempts) {
+    private Individual generateIndividual(List<Classes> classes, List<Classroom> classrooms, int maxAttempts) {
         for (int i = 0; i < maxAttempts; i++) {
             List<Integer> classroomIndexes = IntStream.range(0, classrooms.size()).boxed().collect(Collectors.toList());
             Collections.shuffle(classroomIndexes);
@@ -59,7 +70,10 @@ public class GeneticAlgorithm {
 
             if (allocationFailed)
                 continue;
-            return new Individual(allocation);
+            
+            Individual individual = new Individual(allocation); 
+            individual.setFitness(calculateIndividualFitness(individual, classes, classrooms));
+            return individual;
         }
 
         throw new RuntimeException("Number of attempts of generating a valid allocation exceeded");
@@ -75,7 +89,7 @@ public class GeneticAlgorithm {
      * infinity if any of its classes is assigned to a classroom that cannot 
      * accommodate all of its students.
      */
-    public double calculateIndividualFitness(Individual individual, List<Classes> classes, List<Classroom> classrooms) {
+    private double calculateIndividualFitness(Individual individual, List<Classes> classes, List<Classroom> classrooms) {
         int[] allocation = individual.getChromosome();
         double totalComfort = 0;
         for (int i = 0; i < allocation.length; i++) {
@@ -89,7 +103,7 @@ public class GeneticAlgorithm {
         return totalComfort / allocation.length;
     }
 
-    public Individual tournamentSelect(List<Individual> population) {
+    private Individual tournamentSelect(List<Individual> population) {
         return tournamentSelect(population, TOURNAMENT_SIZE);
     }
 
@@ -101,13 +115,14 @@ public class GeneticAlgorithm {
         List<Individual> shuffled = new ArrayList<>(population);
         Collections.shuffle(shuffled);
         List<Individual> tournamentIndividuals = shuffled.subList(0, tournamentSize);
-        return Collections.max(tournamentIndividuals, Comparator.comparingDouble(Individual::getFitness));
+        
+        return getBestIndividual(tournamentIndividuals);
     }
 
     /**
      * Partially mapped crossover (PMX) implementation.
      */
-    public Individual crossover(Individual parent1, Individual parent2) {
+    private Individual crossover(Individual parent1, Individual parent2) {
         int length = parent1.getChromosome().length;
         int[] child = new int[length];
         Arrays.fill(child, -1);
@@ -139,8 +154,10 @@ public class GeneticAlgorithm {
             }
             child[i] = gene;
         }
-
-        return new Individual(child);
+        
+        Individual individual = new Individual(child); 
+        individual.setFitness(calculateIndividualFitness(individual, classes, classrooms));
+        return individual;
     }
 
     /**
@@ -161,7 +178,7 @@ public class GeneticAlgorithm {
         return -1;
     }
 
-    public Individual mutate(Individual individual) {
+    private Individual mutate(Individual individual) {
         return mutate(individual, this.mutationRate);
     }
 
@@ -180,6 +197,49 @@ public class GeneticAlgorithm {
             chromosome[i] = chromosome[j];
             chromosome[j] = temp;
         }
-        return new Individual(chromosome);
+
+        Individual ind = new Individual(chromosome); 
+        ind.setFitness(calculateIndividualFitness(ind, classes, classrooms));
+        return ind;
+    }
+
+    private List<Individual> generatePopulation(int populationSize, List<Classes> classes, List<Classroom> classrooms) {
+        return IntStream.range(0, populationSize).mapToObj(i -> generateRandomValidAllocation(classes, classrooms)).collect(Collectors.toList());  
+    }
+
+    private Individual getBestIndividual(List<Individual> population) {
+        return Collections.max(population, Comparator.comparingDouble(Individual::getFitness));
+    }
+
+    public void run() {
+        List<Individual> population = generatePopulation(this.populationSize, this.classes, this.classrooms);
+                
+        for (int generation = 0; generation < this.numberOfGenerations; generation++) {
+            List<Individual> newPopulation = new ArrayList<>();
+            
+            Individual bestOfGeneration = getBestIndividual(population);
+            newPopulation.add(bestOfGeneration);
+
+            while (newPopulation.size() < population.size()) {
+                Individual parent1 = tournamentSelect(population);
+                Individual parent2 = tournamentSelect(population);
+
+                Individual child = crossover(parent1, parent2);
+
+                if (ThreadLocalRandom.current().nextDouble() < this.mutationRate)
+                    child = mutate(child);
+                if (child.getFitness() == Double.NEGATIVE_INFINITY)
+                    continue; // It may cause infinity looping
+                    // child = generateRandomValidAllocation(this.classes, this.classrooms); Possible solution
+                
+                newPopulation.add(child);
+            }
+
+            population = newPopulation;
+            System.out.printf("Generation %d | Best fitness: %.2f%n", generation, bestOfGeneration.getFitness());
+        }
+
+        Individual bestIndividual = getBestIndividual(population);
+        System.out.print("\n" + bestIndividual);
     }
 }
