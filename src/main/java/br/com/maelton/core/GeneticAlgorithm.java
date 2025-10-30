@@ -1,6 +1,7 @@
 package br.com.maelton.core;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -97,5 +98,62 @@ public class GeneticAlgorithm {
         Collections.shuffle(shuffled);
         List<Individual> tournamentIndividuals = shuffled.subList(0, tournamentSize);
         return Collections.max(tournamentIndividuals, Comparator.comparingDouble(Individual::getFitness));
+    }
+
+    /**
+     * Partially mapped crossover (PMX) implementation.
+     */
+    public Individual crossover(Individual parent1, Individual parent2) {
+        int length = parent1.getChromosome().length;
+        int[] child = new int[length];
+        Arrays.fill(child, -1);
+
+        /** Choose inclusive distinct crossover points. */
+        int point1 = ThreadLocalRandom.current().nextInt(length);
+        int point2 = ThreadLocalRandom.current().nextInt(length);
+        do {
+            point2 = ThreadLocalRandom.current().nextInt(length);
+        } while (point1 == point2);
+        if (point1 > point2) {
+            int temp = point1;
+            point1 = point2;
+            point2 = temp;
+        }
+
+        /** Copies genes from interval [point1, point2] in parent1 to child. */
+        for (int i = point1; i <= point2; i++) {
+            child[i] = parent1.getChromosome()[i];
+        }
+
+        /** Fill the remaining positions of the child using genes from parent2. */
+        for (int i = 0; i < length; i++) {
+            if (i >= point1 && i <= point2) continue;
+
+            int gene = parent2.getChromosome()[i];
+            while (contains(child, gene)) {
+                gene = parent2.getChromosome()[indexOf(parent1.getChromosome(), gene)];
+            }
+            child[i] = gene;
+        }
+
+        return new Individual(child);
+    }
+
+    /**
+     * Returns true or false whether @param arr contains @param value or not.
+     */
+    private boolean contains(int[] arr, int value) {
+        for (int v : arr) if (v == value) return true;
+        return false;
+    }
+
+    /**
+     * Returns the index of @param value in @param arr .
+     */
+    private int indexOf(int[] arr, int value) {
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i] == value) return i;
+        }
+        return -1;
     }
 }
