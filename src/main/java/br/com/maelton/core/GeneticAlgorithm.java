@@ -70,6 +70,10 @@ public class GeneticAlgorithm {
      * 
      * The larger classrooms are for its relative classes the higher the fitness of
      * an individual.
+     * 
+     * The individual is considered invalid and receives a fitness value of negative 
+     * infinity if any of its classes is assigned to a classroom that cannot 
+     * accommodate all of its students.
      */
     public double calculateIndividualFitness(Individual individual, List<Classes> classes, List<Classroom> classrooms) {
         int[] allocation = individual.getChromosome();
@@ -78,7 +82,7 @@ public class GeneticAlgorithm {
             Classes clazz = classes.get(i);
             Classroom room = classrooms.get(allocation[i]);
             if (room.getCapacity() < clazz.getSize()) {
-                return 0.0;
+                return Double.NEGATIVE_INFINITY;
             }
             totalComfort += (room.getCapacity() - clazz.getSize());
         }
@@ -155,5 +159,27 @@ public class GeneticAlgorithm {
             if (arr[i] == value) return i;
         }
         return -1;
+    }
+
+    public Individual mutate(Individual individual) {
+        return mutate(individual, this.mutationRate);
+    }
+
+    /**
+     * Swaps random genes of @param individual at a given mutation rate ( @param mutationRate ).
+     * 
+     * Be aware that the mutation process may produce invalid individuals - a classroom might
+     * be assigned to a class with more students than the classroom can accommodate.
+     */
+    private Individual mutate(Individual individual, double mutationRate) {
+        int[] chromosome = individual.getChromosome().clone();
+        if (ThreadLocalRandom.current().nextDouble() < mutationRate) {
+            int i = ThreadLocalRandom.current().nextInt(chromosome.length);
+            int j = ThreadLocalRandom.current().nextInt(chromosome.length);
+            int temp = chromosome[i];
+            chromosome[i] = chromosome[j];
+            chromosome[j] = temp;
+        }
+        return new Individual(chromosome);
     }
 }
